@@ -1,9 +1,18 @@
 describe("GNB 뉴스 이동 테스트", () => {
-  gnbMove("공지사항", "newsSub1", "notice");
-  gnbMove("업데이트", "newsSub2", "update");
-  gnbMove("개발자노트", "newsSub3", "devnote");
-  gnbMove("이벤트", "newsSub4", "event");
-  gnbMove("설문조사", "newsSub5", "survey");
+  // 웹에 있는 li 를 가져와 나중에 추가 되더라도 대응 가능하도록 수정
+  it("하위 메뉴 이동 테스트", () => {
+    cy.visit("/");
+    cy.get(".news > ul > li").then((item) => {
+      for (let i = 0; i < item.length - 1; i++) {
+        const li = Cypress.$(item[i]);
+
+        const itemClass = li.attr("class");
+        const name = li.find("a").prop("href");
+        const text = li.find("a").text();
+        gnbMove(text, itemClass, name);
+      }
+    });
+  });
 
   it("확률공개", () => {
     // Given : 사용자가 메인페이지에 접속한다.
@@ -19,44 +28,51 @@ describe("GNB 뉴스 이동 테스트", () => {
   });
 });
 
-describe("사이드 메뉴를 이용한 메뉴 이동", () => {
-  sideMove("공지사항", "lnbNews1", "notice");
-  sideMove("업데이트", "lnbNews2", "update");
-  sideMove("개발자노트", "lnbNews3", "devnote");
-  sideMove("이벤트", "lnbNews4", "event");
-  sideMove("설문조사", "lnbNews5", "survey");
-});
-
 function gnbMove(itName, sub, url) {
-  it(itName, () => {
-    // Given : 사용자가 메인페이지에 접속한다.
-    cy.visit("/");
+  // it(itName, () => {
+  // Given : 사용자가 메인페이지에 접속한다.
+  // cy.visit("/");
 
-    // When : 사용자가 새소식 메뉴를 확인하고 하위 메뉴인 공지사항을 눌러 이동한다.
-    cy.get(".news").should("be.visible").as("gnbNews");
-    cy.get("." + sub).as("subMenu");
+  // When : 사용자가 새소식 메뉴를 확인하고 하위 메뉴인 공지사항을 눌러 이동한다.
+  cy.get(".news").should("be.visible").as("gnbNews");
+  cy.get("." + sub).as("subMenu");
 
-    cy.get("@gnbNews").trigger("mouseover");
+  cy.get("@gnbNews").trigger("mouseover");
 
-    cy.get("@subMenu").should("be.visible").click();
+  cy.get("@subMenu").should("be.visible").click();
 
-    // Then : 메뉴를 이용해 이동한 페이지가 올바른 URL인지 확인한다.
-    cy.location("pathname").should("eq", "/news/" + url + "/list.asp");
-  });
+  // Then : 메뉴를 이용해 이동한 페이지가 올바른 URL인지 확인한다.
+  cy.url().should("eq", url);
+  // });
 }
 
-function sideMove(itName, side, url) {
-  it(itName, () => {
-    // Given : 사용자가 새소식 하위 페이지중 임의의 페이지에 접속한다.
+describe("사이드 메뉴를 이용한 메뉴 이동", () => {
+  it("사이드 메뉴 하위 버튼을 눌러 페이지 이동 확인", () => {
     cy.visit("/news/notice/List.asp");
+    cy.get(".lnbNews > li").then((items) => {
+      for (let i = 0; i < items.length; i++) {
+        const item = Cypress.$(items[i]);
 
-    // When : 사용자가 좌측에 있는 사이드 메뉴를 확인하고 눌러 각 페이지로 이동한다.
-    cy.get("." + side).as("sideMenu");
+        const itemClass = item.attr("class");
+        const name = item.find("a").prop("href");
+        const text = item.find("a").text();
 
-    cy.get("@sideMenu").should("be.visible").click();
-
-    // Then : 메뉴를 이용해 이동한 페이지가 올바른 URL인지 확인한다.
-    // 왜 사이드메뉴만 list.asp에서 L이 대문자인지는 모르겠음..
-    cy.location("pathname").should("eq", "/news/" + url + "/List.asp");
+        sideMove(text, itemClass, name);
+      }
+    });
   });
+});
+function sideMove(itName, side, url) {
+  // it(itName, () => {
+  // Given : 사용자가 새소식 하위 페이지중 임의의 페이지에 접속한다.
+  // cy.visit("/news/notice/List.asp");
+
+  // When : 사용자가 좌측에 있는 사이드 메뉴를 확인하고 눌러 각 페이지로 이동한다.
+  cy.get("." + side).as("sideMenu");
+
+  cy.get("@sideMenu").should("be.visible").click();
+
+  // Then : 메뉴를 이용해 이동한 페이지가 올바른 URL인지 확인한다.
+  cy.url().should("eq", url + "List.asp");
+  // });
 }
